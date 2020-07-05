@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import ChartistGraph from "react-chartist";
-import { Grid, Row, Col } from "react-bootstrap";
+import { Container, Row, Col } from "react-bootstrap";
 import { Card } from "components/Card/Card.js";
 import { StatsCard } from "components/StatsCard/StatsCard.js";
 import { Tasks } from "components/Tasks/Tasks.js";
@@ -18,9 +18,9 @@ import {
   optionsBar,
   responsiveBar,
   legendBar
-} from "variables/Variables.js";
+} from "../shared/Variables.js";
 
-import { dashboardPageDataFetch } from './../actions';
+import { dashboardPageDataFetch } from '../actions';
 
 export class Dashboard extends Component {
 
@@ -44,14 +44,14 @@ export class Dashboard extends Component {
     console.log(this.props)
     return (
       <div className="content">
-        <Grid fluid>
+        <Container fluid>
           <Row>
             <Col lg={4} sm={6}>
               <StatsCard
                 bigIcon={<i className="pe-7s-graph1 text-danger" />}
 
                 statsText="Active Orders"
-                statsValue={this.props.dashboardData.dashboardData.count}
+                statsValue="0"
                 statsIcon={<i className="fa fa-refresh" />}
                 statsIconText="Updated now"
               />
@@ -60,7 +60,7 @@ export class Dashboard extends Component {
               <StatsCard
                 bigIcon={<i className="pe-7s-wallet text-success" />}
                 statsText="Order Amount"
-                statsValue={this.props.dashboardData.dashboardData.ordersAmount}
+                statsValue="0"
                 statsIcon={<i className="fa fa-calendar-o" />}
                 statsIconText="Last day"
               />
@@ -160,7 +160,7 @@ export class Dashboard extends Component {
               />
             </Col>
           </Row>
-        </Grid>
+        </Container>
       </div>
     );
   }
@@ -169,7 +169,7 @@ export class Dashboard extends Component {
 
 function mapStateToProps(state) {
   return {
-    dashboardData: state.dashboardReducer
+    dashboardData: state.DashboardReducer
   }
 }
 

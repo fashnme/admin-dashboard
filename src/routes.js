@@ -1,11 +1,12 @@
-import Dashboard from "views/Dashboard.js";
-import UserProfile from "views/UserProfile.js";
-import TableList from "views/TableList.js";
-import Typography from "views/Typography.js";
-import Icons from "views/Icons.js";
-import Maps from "views/Maps.js";
-import Notifications from "views/Notifications.js";
-import ProductTags from "views/ProductTags.js";
+import Dashboard from "./views/Dashboard.js";
+// import UserProfile from "./views/UserProfile.js";
+// import Typography from "./views/Typography.js";
+import Icons from "./views/Icons.js";
+import Maps from "./views/Maps.js";
+import Notifications from "./views/Notifications.js";
+import TagProducts from "./views/TagProducts.js";
+import Orders from "./views/Orders.js";
+import Order from './views/Order';
 
 const dashboardRoutes = [
   {
@@ -16,32 +17,26 @@ const dashboardRoutes = [
     layout: "/admin"
   },
   {
-    path: "/productTags",
+    path: "/tag-products/:pageNo",
     name: "Tag Products",
     icon: "pe-7s-graph",
-    component: ProductTags,
+    component: TagProducts,
     layout: "/admin"
   },
   {
-    path: "/user",
-    name: "User Profile",
-    icon: "pe-7s-user",
-    component: UserProfile,
+    path: "/orders",
+    name: "Orders",
+    icon: "pe-7s-graph",
+    component: Orders,
     layout: "/admin"
   },
   {
-    path: "/table",
-    name: "Table List",
-    icon: "pe-7s-note2",
-    component: TableList,
-    layout: "/admin"
-  },
-  {
-    path: "/typography",
-    name: "Typography",
-    icon: "pe-7s-news-paper",
-    component: Typography,
-    layout: "/admin"
+    path: "/order/:id",
+    name: "Order",
+    icon: "pe-7s-graph",
+    component: Order,
+    layout: "/admin",
+    invisible:true
   },
   {
     path: "/icons",

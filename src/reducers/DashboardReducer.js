@@ -9,10 +9,9 @@ import {
   };
   
   export default (state = INITIAL_STATE, action) => {
-      console.log('action', action.payload)
       switch (action.type) {
         case DASHBOARD_PAGE_DATA_FETCHED:
-            return { ...state, dashboardData: action.payload };
+            return { ...state, dashboardData: action.payload,  loading: false };
         case DASHBOARD_TOGGLE_LOADING:
             return {...state, loading: action.payload}
         default:

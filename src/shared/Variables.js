@@ -237,6 +237,14 @@ var style = {
       margin: 0,
       padding: 0
     }
+  },
+
+  pointer:{
+    cursor: 'pointer'
+  },
+  LargeCheckbox:{
+      width: '20px', 
+      height: '20px' 
   }
 };
 
@@ -245,7 +253,7 @@ var style = {
 // // // For tables
 // //
 //
-const thArray = ["ID", "Name", "Salary", "Country", "City"];
+const thArray = ["S.No", "OrderID", "Salary", "ProductIds", "OrderAmount"];
 const tdArray = [
   ["1", "Dakota Rice", "$36,738", "Niger", "Oud-Turnhout"],
   ["2", "Minerva Hooper", "$23,789", "Curaçao", "Sinaai-Waas"],
