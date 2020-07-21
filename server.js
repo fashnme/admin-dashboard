@@ -9,6 +9,8 @@ app.get('/*', (req, res) => {
     res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-app.listen(8000, function () {
+let port = process.env.PORT || 8000;
+
+app.listen(port, function () {
     console.log('Started at port 8000');
 });
