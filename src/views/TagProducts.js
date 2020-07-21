@@ -378,7 +378,7 @@ class TagProducts extends Component {
             <div className="col-lg-10">
               {!this.props.vsLoading && this.renderActionButtons()}
             </div>
-            {/* {this.renderProducts()} */}
+            {this.renderProducts()}
             {this.renderCandidateProducts()}
           </div>
           {this.props.vsLoading && this.renderLoadingSpinner()}
