@@ -1,17 +1,17 @@
-import React, { Component } from "react";
-import { Route, Switch } from "react-router-dom";
-import NotificationSystem from "react-notification-system";
-
-import AdminNavbar from "components/Navbars/AdminNavbar";
+import image from "assets/img/sidebar-3.jpg";
 import Footer from "components/Footer/Footer";
+import AdminNavbar from "components/Navbars/AdminNavbar";
 import Sidebar from "components/Sidebar/Sidebar";
-
+import React, { Component } from "react";
+import NotificationSystem from "react-notification-system";
+import { Route, Switch } from "react-router-dom";
 import { style } from "shared/Variables.js";
 import './css/styles.css';
-
 import routes from "./routes.js";
 
-import image from "assets/img/sidebar-3.jpg";
+
+
+
 
 class App extends Component {
     constructor(props) {
@@ -49,7 +49,7 @@ class App extends Component {
                 <div>
                     Welcome to <b>Fashn Bootstrap Admin Panel</b> - a beautiful freebie for
                     every web developer.
-        </div>
+                </div>
             ),
             level: level,
             position: position,
@@ -63,13 +63,12 @@ class App extends Component {
                     <Route
                         exact path={prop.layout + prop.path}
                         render={props => {
-                            console.log(props);
                             return (
-                            <prop.component
-                                {...props}
-                            />
-                        )
-                    }}
+                                <prop.component
+                                    {...props}
+                                />
+                            )
+                        }}
                         key={key}
                     />
                 );
@@ -133,7 +132,7 @@ class App extends Component {
                 <div>
                     Welcome to <b>Light Bootstrap Dashboard</b> - a beautiful freebie for
                     every web developer.
-        </div>
+                </div>
             ),
             level: level,
             position: "tr",
@@ -155,6 +154,7 @@ class App extends Component {
         }
     }
     render() {
+
         return (
             <div className="wrapper">
                 <NotificationSystem ref="notificationSystem" style={style} />

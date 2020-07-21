@@ -1,11 +1,14 @@
+import axios from 'axios';
 import React, { Component } from "react";
-import { Card, Spinner } from 'react-bootstrap';
+import { Button, Card, Spinner } from 'react-bootstrap';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { fetchPostForProductTagging, fetchVisuallySimilarProducts, submitTaggedProducts } from './../actions/index';
+import sharedVariables from '../shared/sharedVariables';
+import { fetchPostForProductTagging, fetchPostForTagging, fetchVisuallySimilarProducts, submitTaggedProducts } from './../actions/index';
 import { style } from './../shared/Variables';
+
 
 class TagProducts extends Component {
 
@@ -29,11 +32,19 @@ class TagProducts extends Component {
     this.state = { ...this.initialState };
   };
 
+
+
   componentDidMount() {
 
-    // Finding PageNo From RouteParams (default is 1) and setting it in local state
-    this.props.fetchPostForProductTagging(Number(this.props.match.params.pageNo) || 1);
-    this.props.history.push(`/admin/tag-products/${Number(this.props.match.params.pageNo) || 1}`);
+    // console.log(this.props.location.pathname.includes('tag-product-id'))
+    if (this.props.location.pathname.includes('tag-product-id')) {
+      // Fetch products based on productId
+      this.props.fetchPostForProductTagging(this.props.match.params.postId);
+    } else {
+      // Finding PageNo From RouteParams (default is 1) and setting it in local state
+      this.props.fetchPostForProductTagging(Number(this.props.match.params.pageNo) || 1);
+      this.props.history.push(`/admin/tag-products/${Number(this.props.match.params.pageNo) || 1}`);
+    }
 
   };
 
@@ -43,7 +54,19 @@ class TagProducts extends Component {
     this.props.fetchPostForProductTagging(Number(this.props.match.params.pageNo) + 1);
   };
 
-  fetchProductsButtonClicked() {
+  async fetchProductsButtonClicked() {
+    if (this.props.posts[0]._source.mediaType === 'video') {
+      let response = await axios.post('https://api.cloudinary.com/v1_1/patang1/image/upload', {
+        file: this.state.src,
+        upload_preset: sharedVariables.upload_preset
+      }).catch(e => {
+        console.log(e);
+      });
+
+      this.setState({
+        src: response.data.secure_url.replace('.png', '.jpg')
+      })
+    }
     this.props.fetchVisuallySimilarProducts(this.state.src, this.state.bbCordinates);
   };
 
@@ -93,6 +116,10 @@ class TagProducts extends Component {
   onImageLoaded = image => {
     this.imageRef = image;
     this.setState({ currentPostId: this.props.posts[0]._id, src: image.src });
+    this.setState({
+      currentlyTaggedProducts: this.props.posts[0]._source.taggedProducts
+    })
+
   };
 
 
@@ -116,7 +143,6 @@ class TagProducts extends Component {
 
 
   tagProduct(product) {
-
     let currentlyTaggedProducts = this.state.currentlyTaggedProducts;
     let removed;
 
@@ -147,11 +173,9 @@ class TagProducts extends Component {
     let video = this.refs.video;
     let canvas = this.refs.canvasOfSS;
 
-
     this.setState({
-      canvas, video
-
-    });
+      canvas, video, currentlyTaggedProducts: this.props.posts[0]._source.taggedProducts, currentPostId: this.props.posts[0]._id
+    })
 
   };
 
@@ -170,7 +194,6 @@ class TagProducts extends Component {
     context.fillRect(0, 0, w, h);
     context.drawImage(this.refs.video, 0, 0, w, h);
     let b64 = canvas.toDataURL();
-
     this.setState({ src: b64 });
   };
 
@@ -178,9 +201,8 @@ class TagProducts extends Component {
     if (this.props.posts[0] && this.props.posts[0]._source.mediaType === 'video') {
       return (
         <div>
-
           <video crossOrigin="Anonymous" style={{ maxHeight: '400px' }} ref="video" controls onLoadedMetadata={() => { this.onVideoMetaDataLoadingCompletion() }} className="img-responsive" loop onPause={(data) => { this.takeSSFromVideo(); }}>
-            <source type="video/mp4" src={this.props.posts[0]._source.uploadUrl} ></source>
+            <source type="video/mp4" src={this.props.posts[0]._source.bucketUrl} ></source>
           </video>
           <canvas style={{ display: 'none' }} crossOrigin="Anonymous" ref="canvasOfSS" id="canvas"></canvas>
         </div>
@@ -217,28 +239,73 @@ class TagProducts extends Component {
     }
   };
 
-
+  renderPostDetails() {
+    if (this.props.posts[0]) {
+      return (
+        <div>
+          <span>{this.props.posts[0]._id}</span>
+        </div>
+      )
+    }
+  }
   renderActionButtons() {
     return (
-      <div className="shadow  bg-grey rounded">
-        <button
-          disabled={this.state.productSelected ? false : true}
-          className=" btn mx-auto btn"
-          style={{ margin: '5px 15px', float: 'right' }}
-          onClick={() => { this.submitCompleteTagging(this.state.currentPostId, this.state.currentlyTaggedProducts.map(ele => ele.productId)) }}>
-          Submit
-        </button>
-        <button
-          className=" btn mx-auto btn"
+      <div>
+        {this.props.loading && this.renderLoadingSpinner()}
+        {
+          this.state.productSelected && <Button
+            variant="danger"
+            disabled={this.state.productSelected ? false : true}
+            style={{ margin: '5px 15px' }}
+            onClick={() => {
+              this.submitCompleteTagging(this.state.currentPostId, this.state.currentlyTaggedProducts.map(product => {
+                return {
+                  ...product
+                }
+              }
+              ))
+            }}
+          >
+            Submit
+        </Button>
+        }
+        {' '}
+        <Button
+          variant="success"
           style={{ margin: '5px 15px', float: 'right' }}
           onClick={() => { this.fetchNextPagePost() }}>
           Next Post
-      </button>
-
-
+      </Button>{' '}
       </div>
     );
-  }; page
+  };
+
+  renderCandidateProducts() {
+    if (this.props.posts[0]) {
+
+      let hashMap = {};
+      this.props.posts[0]._source.tempProducts.forEach(product => { hashMap[product.productId] = product; });
+      // console.log(hashMap);
+      let uniqueTempProducts = Object.values(hashMap);
+      return uniqueTempProducts.map((product, index) => {
+        return (
+          <div key={index} className="col-lg-3 shadow p-3 mb-5 bg-white rounded" style={{ height: '280px' }} key={product.productId}>
+            <Card style={{ maxWidth: "100%", maxHeight: '260px', position: "relative" }}>
+              <Card.Img style={{ height: '200px' }} variant="top" src={product.image || product.imagesArray[0]} />
+              <div style={{ position: 'absolute', top: '180px', right: '0px' }} className="mb-3">
+                <label className="custom-control custom-checkbox">
+                  <input type="checkbox" style={{ ...style.LargeCheckbox, ...style.pointer }} onChange={() => { this.tagProduct(product); }} label="" id={product.productId} />
+                </label>
+              </div>
+              <strong>{product.brandName}</strong> {product.ecommerce} - Rs.{product.price}
+            </Card>
+          </div>
+        );
+      });
+    } else {
+      return [];
+    }
+  }
 
   renderProducts() {
     if (this.props.vsProducts.length > 0) {
@@ -246,7 +313,7 @@ class TagProducts extends Component {
         return (
           <div className="col-lg-3 shadow p-3 mb-5 bg-white rounded" style={{ height: '280px' }} key={product.productId}>
             <Card style={{ maxWidth: "100%", maxHeight: '260px', position: "relative" }}>
-              <Card.Img style={{ height: '200px' }} variant="top" src={product.imageUrl} />
+              <Card.Img style={{ height: '200px' }} variant="top" src={product.image || product.imagesArray[0]} />
               <div style={{ position: 'absolute', top: '180px', right: '0px' }} className="mb-3">
                 <label className="custom-control custom-checkbox">
                   <input type="checkbox" style={{ ...style.LargeCheckbox, ...style.pointer }} onChange={() => { this.tagProduct(product); }} label="" id={product.productId} />
@@ -262,20 +329,11 @@ class TagProducts extends Component {
       return [];
     }
   }
-
-  renderLoadingSpinner() {
-    return (
-      <Spinner animation="border" role="status" className="text-center" style={{ marginTop: "30px" }}>
-        <span className="sr-only">Loading...</span>
-      </Spinner>
-    )
-  };
-
   renderAlreadySelectedProducts() {
     return this.state.currentlyTaggedProducts.map((product, index) => {
       return (
         <div key={index} className="col-lg-3" style={{ position: 'relative' }}>
-          <img alt='' className="img-fluid" src={product.imageUrl} />
+          <img alt='' className="img-fluid" src={product.image || product.imagesArray[0]} />
           <i
             onClick={() => { this.removeProductFromTagging(product.productId) }}
             className='fa fa-times'
@@ -286,15 +344,25 @@ class TagProducts extends Component {
       )
     });
   };
+  renderLoadingSpinner() {
+    return (
+      <Spinner animation="border" role="status" className="text-center" style={{ marginTop: "30px" }}>
+        <span className="sr-only">Loading...</span>
+      </Spinner>
+    )
+  };
 
 
   render() {
-    const { cropDone, crop } = this.state;
+
+    const { cropDone } = this.state;
     return (
       <div className="row" >
         <div className="col-lg-3 text-center">
+
+          {this.renderPostDetails()}
           {this.renderImagePost()}
-          {cropDone && <button onClick={() => { this.fetchProductsButtonClicked() }} className="mx-auto btn" >Crop & Search Similar</button>}
+          {cropDone && <div><button onClick={() => { this.fetchProductsButtonClicked() }} className="mx-auto btn btn-small btn-primary" >Crop & Search Similar</button>  <br></br><br></br> <br></br></div>}
 
           {this.renderVideoPost()}
 
@@ -310,7 +378,8 @@ class TagProducts extends Component {
             <div className="col-lg-10">
               {!this.props.vsLoading && this.renderActionButtons()}
             </div>
-            {this.renderProducts()}
+            {/* {this.renderProducts()} */}
+            {this.renderCandidateProducts()}
           </div>
           {this.props.vsLoading && this.renderLoadingSpinner()}
         </div>
@@ -330,7 +399,7 @@ function mapStateToProps(state) {
 };
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators({ fetchPostForProductTagging, fetchVisuallySimilarProducts, submitTaggedProducts }, dispatch);
+  return bindActionCreators({ fetchPostForProductTagging, fetchVisuallySimilarProducts, submitTaggedProducts, fetchPostForTagging }, dispatch);
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(TagProducts);

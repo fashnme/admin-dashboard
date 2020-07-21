@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import { bindActionCreators } from 'redux';
+import { Card, Form } from "react-bootstrap";
 import { connect } from 'react-redux';
-import { Card, Button, Form } from "react-bootstrap";
+import { bindActionCreators } from 'redux';
 import { orderPageDataFetch, updateOrderProductStatus } from '../actions';
 
 class Order extends Component {
@@ -11,8 +11,8 @@ class Order extends Component {
         this.props.orderPageDataFetch(this.props.match.params.id);
     };
 
-    updateProductStatus(a,b,c) {
-        this.props.updateOrderProductStatus(a,b,c);
+    updateProductStatus(a, b, c) {
+        this.props.updateOrderProductStatus(a, b, c);
     }
 
     renderProducts() {
@@ -28,22 +28,22 @@ class Order extends Component {
                                 <br /> Size: {product.size}, Quantity: {product.quantity || 1}
                                 <br />Price: {product.price}
                             </Card.Text>
-                                <Form.Group controlId="exampleForm.ControlSelect1">
-                                    <Form.Label>Update Status</Form.Label>
-                                    <Form.Control 
-                                        as="select" 
-                                        defaultValue={product.status}
-                                        onChange = { (event) => { this.updateProductStatus(this.props.orderDetails.orderId, product.productId, event.target.value); } }
->
-                                            <option >Select</option>
-                                            <option value="placed">Placed</option>
-                                            <option value="confirmed">Confirmed</option>
-                                            <option value="dispatched">Dispatched</option>
-                                            <option value="shipped">Shipped</option>
-                                            <option value="cancelled">Cancelled</option>
-                                            </Form.Control>
-                                </Form.Group>
-                                
+                            <Form.Group controlId="exampleForm.ControlSelect1">
+                                <Form.Label>Update Status</Form.Label>
+                                <Form.Control
+                                    as="select"
+                                    defaultValue={product.status}
+                                    onChange={(event) => { this.updateProductStatus(this.props.orderDetails.orderId, product.productId, event.target.value); }}
+                                >
+                                    <option >Select</option>
+                                    <option value="placed">Placed</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="dispatched">Dispatched</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </Form.Control>
+                            </Form.Group>
+
                         </Card.Body>
                     </Card>
                 )

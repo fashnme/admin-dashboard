@@ -4,9 +4,9 @@ import Dashboard from "./views/Dashboard.js";
 import Icons from "./views/Icons.js";
 import Maps from "./views/Maps.js";
 import Notifications from "./views/Notifications.js";
-import TagProducts from "./views/TagProducts.js";
-import Orders from "./views/Orders.js";
 import Order from './views/Order';
+import Orders from "./views/Orders.js";
+import TagProducts from "./views/TagProducts.js";
 
 const dashboardRoutes = [
   {
@@ -24,6 +24,13 @@ const dashboardRoutes = [
     layout: "/admin"
   },
   {
+    path: "/tag-product-id/:postId",
+    name: "Tag By ID",
+    icon: "pe-7s-graph",
+    component: TagProducts,
+    layout: "/admin"
+  },
+  {
     path: "/orders",
     name: "Orders",
     icon: "pe-7s-graph",
@@ -36,7 +43,7 @@ const dashboardRoutes = [
     icon: "pe-7s-graph",
     component: Order,
     layout: "/admin",
-    invisible:true
+    invisible: true
   },
   {
     path: "/icons",

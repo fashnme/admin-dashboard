@@ -20,11 +20,34 @@ export const fetchPostForProductTagging = (pageNo) => {
     }
 }
 
+export const fetchPostForTagging = (postId) => {
+    const { baseUrl } = sharedVariables;
+
+    return (dispatch) => {
+
+        // Dispatch loading payload
+        dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING_LOADING, payload: { loading: true } });
+
+        // Function to dispatch action
+
+        axios.post(`${baseUrl}/admin/fetch-post-for-product-tagging`, { postId })
+            .then((response) => {
+                dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING_LOADING, payload: { loading: false } });
+
+                dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING, payload: response.data });
+
+            })
+            .catch(error => {
+                console.log('Error', error);
+            });
+    }
+}
+
 const getPostsForTagging = (pageNo, dispatch) => {
 
     const { baseUrl } = sharedVariables;
 
-    axios.post(`${baseUrl}/admin/fetch-posts-for-product-tagging`, { pageNo })
+    axios.post(`${baseUrl}/admin/fetch-posts-for-product-tagging`, { pageNo }, { headers: sharedVariables.headers })
         .then((response) => {
             dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING, payload: response.data });
         })
@@ -50,9 +73,8 @@ export const fetchVisuallySimilarProducts = (sourceUrl, bbCordinates) => {
 const getVSProducts = (sourceUrl, bbCordinates, dispatch) => {
 
     const { baseUrl } = sharedVariables;
-    console.log(sourceUrl, bbCordinates)
 
-    axios.post(`${baseUrl}/admin/get-visually-similar-products`, { source: sourceUrl, bbox: bbCordinates })
+    axios.post(`${baseUrl}/admin/get-visually-similar-products`, { source: sourceUrl, bbox: bbCordinates }, { headers: sharedVariables.headers })
         .then((response) => {
             dispatch({ type: FETCH_VISUALLY_SIMILAR_PRODUCTS, payload: response.data });
         })
@@ -62,23 +84,42 @@ const getVSProducts = (sourceUrl, bbCordinates, dispatch) => {
 
 }
 
-export const submitTaggedProducts = (postId, productIdArray, dispatch) => {
+export const submitTaggedProducts = (postId, productsArray) => {
+
+    // console.log(productsArray)
 
     const { baseUrl } = sharedVariables;
 
-    axios.post(`${baseUrl}/admin/update-tagged-products-array`, { postId: postId, taggedProducts: productIdArray })
-        .then((response) => {
-            return (dispatch) => {
 
+    return (dispatch) => {
+        dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING_LOADING, payload: { loading: true } });
+        console.log('updating', { postId: postId, taggedProducts: productsArray });
+
+        axios.post(`${baseUrl}/admin/update-tagged-products-array`, { postId: postId, taggedProducts: productsArray }, { headers: sharedVariables.headers })
+            .then((response) => {
+
+                console.log('updated');
                 // Dispatch loading payload
-                dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING_LOADING, payload: { loading: true } });
+                dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING_LOADING, payload: { loading: false } });
 
                 // Function to dispatch action
-                getPostsForTagging(dispatch);
-            }
-        })
-        .catch(error => {
-            console.log('Error', error);
-        });
+                // getPostsForTagging(pageNo, dispatch);
+                window.location.href = window.location.href;
+            }).catch(error => {
+                dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING_LOADING, payload: { loading: false } });
+
+                console.log('Error', error);
+            });
+    }
+}
+
+
+export const fetchProducts = (productIdArray) => {
+    const { baseUrl } = sharedVariables;
+
+    return (dispatch) => {
+
+    }
+
 
 }
