@@ -8,7 +8,7 @@ import {
 } from './../types';
 
 
-export const fetchPostForProductTagging = (pageNo) => {
+export const fetchPostByPageNo = (pageNo) => {
 
     return (dispatch) => {
 
@@ -20,8 +20,8 @@ export const fetchPostForProductTagging = (pageNo) => {
     }
 }
 
-export const fetchPostForTagging = (postId) => {
-    const { baseUrl } = sharedVariables;
+export const fetchPostById = (postId) => {
+    const { baseUrl, headers } = sharedVariables;
 
     return (dispatch) => {
 
@@ -30,7 +30,7 @@ export const fetchPostForTagging = (postId) => {
 
         // Function to dispatch action
 
-        axios.post(`${baseUrl}/admin/fetch-post-for-product-tagging`, { postId })
+        axios.post(`${baseUrl}/admin/fetch-post-for-product-tagging`, { postId }, { headers })
             .then((response) => {
                 dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING_LOADING, payload: { loading: false } });
 
@@ -45,9 +45,9 @@ export const fetchPostForTagging = (postId) => {
 
 const getPostsForTagging = (pageNo, dispatch) => {
 
-    const { baseUrl } = sharedVariables;
+    const { baseUrl, headers } = sharedVariables;
 
-    axios.post(`${baseUrl}/admin/fetch-posts-for-product-tagging`, { pageNo }, { headers: sharedVariables.headers })
+    axios.post(`${baseUrl}/admin/fetch-posts-for-product-tagging`, { pageNo }, { headers })
         .then((response) => {
             dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING, payload: response.data });
         })
@@ -104,7 +104,7 @@ export const submitTaggedProducts = (postId, productsArray) => {
 
                 // Function to dispatch action
                 // getPostsForTagging(pageNo, dispatch);
-                window.location.href = window.location.href;
+                window.location.href = `${window.location.href}`;
             }).catch(error => {
                 dispatch({ type: FETCH_POST_FOR_PRODUCT_TAGGING_LOADING, payload: { loading: false } });
 
@@ -113,13 +113,3 @@ export const submitTaggedProducts = (postId, productsArray) => {
     }
 }
 
-
-export const fetchProducts = (productIdArray) => {
-    const { baseUrl } = sharedVariables;
-
-    return (dispatch) => {
-
-    }
-
-
-}

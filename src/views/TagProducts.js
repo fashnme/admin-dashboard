@@ -6,7 +6,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import sharedVariables from '../shared/sharedVariables';
-import { fetchPostForProductTagging, fetchPostForTagging, fetchVisuallySimilarProducts, submitTaggedProducts } from './../actions/index';
+import { fetchPostById, fetchPostByPageNo, fetchVisuallySimilarProducts, submitTaggedProducts } from './../actions/index';
 import { style } from './../shared/Variables';
 
 
@@ -39,10 +39,10 @@ class TagProducts extends Component {
     // console.log(this.props.location.pathname.includes('tag-product-id'))
     if (this.props.location.pathname.includes('tag-product-id')) {
       // Fetch products based on productId
-      this.props.fetchPostForProductTagging(this.props.match.params.postId);
+      this.props.fetchPostById(this.props.match.params.postId);
     } else {
       // Finding PageNo From RouteParams (default is 1) and setting it in local state
-      this.props.fetchPostForProductTagging(Number(this.props.match.params.pageNo) || 1);
+      this.props.fetchPostByPageNo(Number(this.props.match.params.pageNo) || 1);
       this.props.history.push(`/admin/tag-products/${Number(this.props.match.params.pageNo) || 1}`);
     }
 
@@ -51,7 +51,7 @@ class TagProducts extends Component {
   fetchNextPagePost() {
     this.props.history.push(`/admin/tag-products/${Number(this.props.match.params.pageNo) + 1}`);
     this.setState({ ...this.initialState });
-    this.props.fetchPostForProductTagging(Number(this.props.match.params.pageNo) + 1);
+    this.props.fetchPostByPageNo(Number(this.props.match.params.pageNo) + 1);
   };
 
   async fetchProductsButtonClicked() {
@@ -166,6 +166,13 @@ class TagProducts extends Component {
   };
 
   submitCompleteTagging(postId, productIdArray) {
+    if (productIdArray.length === 0) {
+      let confirmation = window.confirm('There is no product tagged, are you sure?');
+      if (!confirmation) {
+        return;
+      }
+    }
+
     this.props.submitTaggedProducts(postId, productIdArray);
   };
 
@@ -252,24 +259,21 @@ class TagProducts extends Component {
     return (
       <div>
         {this.props.loading && this.renderLoadingSpinner()}
-        {
-          this.state.productSelected && <Button
-            variant="danger"
-            disabled={this.state.productSelected ? false : true}
-            style={{ margin: '5px 15px' }}
-            onClick={() => {
-              this.submitCompleteTagging(this.state.currentPostId, this.state.currentlyTaggedProducts.map(product => {
-                return {
-                  ...product
-                }
+        <Button
+          variant="danger"
+          disabled={this.state.productSelected ? false : true}
+          style={{ margin: '5px 15px', float: 'right' }}
+          onClick={() => {
+            this.submitCompleteTagging(this.state.currentPostId, this.state.currentlyTaggedProducts.map(product => {
+              return {
+                ...product
               }
-              ))
-            }}
-          >
-            Submit
+            }
+            ))
+          }}
+        >
+          Submit
         </Button>
-        }
-        {' '}
         <Button
           variant="success"
           style={{ margin: '5px 15px', float: 'right' }}
@@ -284,12 +288,12 @@ class TagProducts extends Component {
     if (this.props.posts[0]) {
 
       let hashMap = {};
-      this.props.posts[0]._source.tempProducts.forEach(product => { hashMap[product.productId] = product; });
+      (this.props.posts[0]._source.tempProducts || []).forEach(product => { hashMap[product.productId] = product; });
       // console.log(hashMap);
       let uniqueTempProducts = Object.values(hashMap);
       return uniqueTempProducts.map((product, index) => {
         return (
-          <div key={index} className="col-lg-3 shadow p-3 mb-5 bg-white rounded" style={{ height: '280px' }} key={product.productId}>
+          <div key={index} className="col-lg-3 shadow p-3 mb-5 bg-white rounded" style={{ height: '280px' }}>
             <Card style={{ maxWidth: "100%", maxHeight: '260px', position: "relative" }}>
               <Card.Img style={{ height: '200px' }} variant="top" src={product.image || product.imagesArray[0]} />
               <div style={{ position: 'absolute', top: '180px', right: '0px' }} className="mb-3">
@@ -379,9 +383,9 @@ class TagProducts extends Component {
               {!this.props.vsLoading && this.renderActionButtons()}
             </div>
             {this.renderProducts()}
+            {this.props.vsLoading && this.renderLoadingSpinner()}
             {this.renderCandidateProducts()}
           </div>
-          {this.props.vsLoading && this.renderLoadingSpinner()}
         </div>
       </div>
     );
@@ -399,7 +403,7 @@ function mapStateToProps(state) {
 };
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators({ fetchPostForProductTagging, fetchVisuallySimilarProducts, submitTaggedProducts, fetchPostForTagging }, dispatch);
+  return bindActionCreators({ fetchPostByPageNo, fetchPostById, fetchVisuallySimilarProducts, submitTaggedProducts }, dispatch);
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(TagProducts);
