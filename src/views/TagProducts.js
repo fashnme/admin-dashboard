@@ -261,7 +261,7 @@ class TagProducts extends Component {
         {this.props.loading && this.renderLoadingSpinner()}
         <Button
           variant="danger"
-          disabled={this.state.productSelected ? false : true}
+          // disabled={this.state.productSelected ? false : true}
           style={{ margin: '5px 15px', float: 'right' }}
           onClick={() => {
             this.submitCompleteTagging(this.state.currentPostId, this.state.currentlyTaggedProducts.map(product => {
