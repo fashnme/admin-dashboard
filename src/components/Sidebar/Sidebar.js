@@ -1,10 +1,9 @@
-
+import logo from "assets/img/fashn-logo.png";
 import React, { Component } from "react";
 import { NavLink } from "react-router-dom";
-
 import AdminNavbarLinks from "../Navbars/AdminNavbarLinks.js";
 
-import logo from "assets/img/fashn-logo.png";
+
 
 class Sidebar extends Component {
     constructor(props) {
@@ -49,7 +48,7 @@ class Sidebar extends Component {
                         </div>
                     </a>
                     <h6 className="mt-2">Fashn Seller Dashboard</h6>
-                   
+
                 </div>
                 <div className="sidebar-wrapper">
                     <ul className="nav">
@@ -60,7 +59,7 @@ class Sidebar extends Component {
                             if (!prop.redirect)
                                 return (
                                     <li
-                                        style={{width: '80%'}}
+                                        style={{ width: '80%' }}
                                         className={this.activeRoute(prop.layout + prop.path)}
                                         key={key}
                                     >

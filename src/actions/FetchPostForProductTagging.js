@@ -4,7 +4,11 @@ import {
     FETCH_POST_FOR_PRODUCT_TAGGING,
     FETCH_POST_FOR_PRODUCT_TAGGING_LOADING,
 
-    FETCH_VISUALLY_SIMILAR_PRODUCTS, FETCH_VISUALLY_SIMILAR_PRODUCTS_LOADING
+    FETCH_TEXTUALLy_SIMILAR_PROUCTS,
+    FETCH_TEXTUALLy_SIMILAR_PROUCTS_LOADING, FETCH_VISUALLY_SIMILAR_PRODUCTS,
+
+
+    FETCH_VISUALLY_SIMILAR_PRODUCTS_LOADING
 } from './../types';
 
 
@@ -82,6 +86,16 @@ const getVSProducts = (sourceUrl, bbCordinates, dispatch) => {
             console.log('Error', error);
         });
 
+}
+
+export const fetchTextuallySimilarProducts = (query) => {
+    return (dispatch) => {
+        dispatch({ type: FETCH_TEXTUALLy_SIMILAR_PROUCTS_LOADING, payload: { loading: true } });
+        axios.get(`http://fresh-rope-219511.appspot.com/search?q=${query}`).then((response) => {
+            console.log(response.data)
+            dispatch({ type: FETCH_TEXTUALLy_SIMILAR_PROUCTS, payload: response.data })
+        })
+    }
 }
 
 export const submitTaggedProducts = (postId, productsArray) => {

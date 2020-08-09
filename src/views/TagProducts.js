@@ -6,7 +6,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import sharedVariables from '../shared/sharedVariables';
-import { fetchPostById, fetchPostByPageNo, fetchVisuallySimilarProducts, submitTaggedProducts } from './../actions/index';
+import { fetchPostById, fetchPostByPageNo, fetchTextuallySimilarProducts, fetchVisuallySimilarProducts, submitTaggedProducts } from './../actions/index';
 import { style } from './../shared/Variables';
 
 
@@ -24,12 +24,16 @@ class TagProducts extends Component {
       },
       bbCordinates: [0, 0, 0, 0],
       cropDone: false,
-      vsProductsLoading: false,
+      productsLoading: false,
       productSelected: null,
       currentlyTaggedProducts: [],
-      currentPostId: null
+      currentPostId: null,
+      searchQuery: ''
     };
     this.state = { ...this.initialState };
+
+    this.searchProducts = this.searchProducts.bind(this);
+    this.searchQueryChange = this.searchQueryChange.bind(this);
   };
 
 
@@ -70,6 +74,15 @@ class TagProducts extends Component {
     this.props.fetchVisuallySimilarProducts(this.state.src, this.state.bbCordinates);
   };
 
+  searchProducts(event) {
+    if (event.charCode === 13) {
+      // console.log(this.state.query)
+      this.props.fetchTextuallySimilarProducts(this.state.searchQuery);
+    }
+  }
+  searchQueryChange(event) {
+    this.setState({ searchQuery: event.target.value })
+  }
 
 
   async makeClientCrop(crop) {
@@ -163,6 +176,11 @@ class TagProducts extends Component {
     let currentlyTaggedProducts = this.state.currentlyTaggedProducts;
     currentlyTaggedProducts = currentlyTaggedProducts.filter(product => product.productId !== productId);
     this.setState({ currentlyTaggedProducts: currentlyTaggedProducts });
+    // console.log(document.querySelector(`#${productId}`).checked)
+    if (document.querySelector(`#${productId}`)) {
+      document.querySelector(`#${productId}`).checked = false;
+
+    }
   };
 
   submitCompleteTagging(postId, productIdArray) {
@@ -255,31 +273,40 @@ class TagProducts extends Component {
       )
     }
   }
-  renderActionButtons() {
+  renderSearchBar() {
+    return (
+      <input style={styles.inputSearchStyle} placeholder="Ex: Women Blue jeans under 1000" type="text" value={this.state.searchQuery} onChange={(e) => this.searchQueryChange(e)} onKeyPress={(e) => { this.searchProducts(e) }}
+      />
+    )
+  }
+  renderActionButtonsAndSearchbar() {
     return (
       <div>
-        {this.props.loading && this.renderLoadingSpinner()}
-        <Button
-          variant="danger"
-          // disabled={this.state.productSelected ? false : true}
-          style={{ margin: '5px 15px', float: 'right' }}
-          onClick={() => {
-            this.submitCompleteTagging(this.state.currentPostId, this.state.currentlyTaggedProducts.map(product => {
-              return {
-                ...product
+        <div>
+          {this.renderSearchBar()}
+          <Button
+            variant="danger"
+            // disabled={this.state.productSelected ? false : true}
+            style={{ margin: '5px 15px', float: 'right' }}
+            onClick={() => {
+              this.submitCompleteTagging(this.state.currentPostId, this.state.currentlyTaggedProducts.map(product => {
+                return {
+                  ...product
+                }
               }
-            }
-            ))
-          }}
-        >
-          Submit
+              ))
+            }}
+          >
+            Submit
         </Button>
-        <Button
-          variant="success"
-          style={{ margin: '5px 15px', float: 'right' }}
-          onClick={() => { this.fetchNextPagePost() }}>
-          Next Post
-      </Button>{' '}
+          <Button
+            variant="success"
+            style={{ margin: '5px 15px', float: 'right' }}
+            onClick={() => { this.fetchNextPagePost() }}>
+            Next Post
+      </Button>
+        </div>
+        <div style={{ justifyContent: 'center' }}>{(this.props.loading || this.props.productLoading) && this.renderLoadingSpinner()}</div>
       </div>
     );
   };
@@ -312,8 +339,8 @@ class TagProducts extends Component {
   }
 
   renderProducts() {
-    if (this.props.vsProducts.length > 0) {
-      let products = this.props.vsProducts.map((product) => {
+    if (this.props.products.length > 0) {
+      let products = this.props.products.map((product) => {
         return (
           <div className="col-lg-3 shadow p-3 mb-5 bg-white rounded" style={{ height: '280px' }} key={product.productId}>
             <Card style={{ maxWidth: "100%", maxHeight: '260px', position: "relative" }}>
@@ -374,16 +401,17 @@ class TagProducts extends Component {
         </div>
         <div>
         </div>
-        <div className="col-lg-8 text-center">
-          <div className="row">
-            {this.renderAlreadySelectedProducts()}
-          </div>
+        <div className="col-lg-9 text-center">
+
           <div className="row text-center">
             <div className="col-lg-10">
-              {!this.props.vsLoading && this.renderActionButtons()}
+              {this.renderActionButtonsAndSearchbar()}
             </div>
+            <div className="row">
+              {this.renderAlreadySelectedProducts()}
+            </div>
+
             {this.renderProducts()}
-            {this.props.vsLoading && this.renderLoadingSpinner()}
             {this.renderCandidateProducts()}
           </div>
         </div>
@@ -396,14 +424,23 @@ function mapStateToProps(state) {
   return {
     posts: state.postsTaggingReducer.posts,
     pageNo: state.postsTaggingReducer.pageNo,
-    vsProducts: state.postsTaggingReducer.vsProducts,
-    vsLoading: state.postsTaggingReducer.vsLoading,
+    products: state.postsTaggingReducer.products,
+    productsLoading: state.postsTaggingReducer.productsLoading,
     loading: state.postsTaggingReducer.loading
   }
 };
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators({ fetchPostByPageNo, fetchPostById, fetchVisuallySimilarProducts, submitTaggedProducts }, dispatch);
+  return bindActionCreators({ fetchPostByPageNo, fetchPostById, fetchVisuallySimilarProducts, submitTaggedProducts, fetchTextuallySimilarProducts }, dispatch);
 };
 
+const styles = {
+  inputSearchStyle: {
+    width: '55%',
+    borderRadius: 30,
+    height: 45,
+    justifyContent: 'left',
+    padding: 5
+  }
+}
 export default connect(mapStateToProps, mapDispatchToProps)(TagProducts);
