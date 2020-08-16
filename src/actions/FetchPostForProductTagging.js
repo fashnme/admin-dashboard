@@ -92,7 +92,6 @@ export const fetchTextuallySimilarProducts = (query) => {
     return (dispatch) => {
         dispatch({ type: FETCH_TEXTUALLy_SIMILAR_PROUCTS_LOADING, payload: { loading: true } });
         axios.get(`http://fresh-rope-219511.appspot.com/search?q=${query}`).then((response) => {
-            console.log(response.data)
             dispatch({ type: FETCH_TEXTUALLy_SIMILAR_PROUCTS, payload: response.data })
         })
     }

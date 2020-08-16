@@ -50,6 +50,8 @@ export class Login extends Component {
             otp: Number(this.state.otp)
         }).then(response => {
             localStorage.setItem("admin", response.data.admin)
+            localStorage.setItem("role", response.data.role)
+            localStorage.setItem("lastLoggedin", new Date().getTime())
             window.location.href = '/admin/dashboard'
         }).catch(e => {
 

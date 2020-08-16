@@ -11,11 +11,8 @@ import { style } from './../shared/Variables';
 
 
 class TagProducts extends Component {
-
   constructor() {
-
     super();
-
     this.initialState = {
       src: '',
       croppedImageUrl: '',
@@ -24,19 +21,18 @@ class TagProducts extends Component {
       },
       bbCordinates: [0, 0, 0, 0],
       cropDone: false,
-      productsLoading: false,
       productSelected: null,
       currentlyTaggedProducts: [],
       currentPostId: null,
-      searchQuery: ''
+      searchQuery: '',
+      similarProducts: [],
+      cloudinaryUploading: false
     };
     this.state = { ...this.initialState };
 
     this.searchProducts = this.searchProducts.bind(this);
     this.searchQueryChange = this.searchQueryChange.bind(this);
   };
-
-
 
   componentDidMount() {
 
@@ -60,15 +56,17 @@ class TagProducts extends Component {
 
   async fetchProductsButtonClicked() {
     if (this.props.posts[0]._source.mediaType === 'video') {
+      this.setState({ cloudinaryUploading: true })
       let response = await axios.post('https://api.cloudinary.com/v1_1/patang1/image/upload', {
         file: this.state.src,
         upload_preset: sharedVariables.upload_preset
       }).catch(e => {
         console.log(e);
+        this.setState({ cloudinaryUploading: false })
       });
 
       this.setState({
-        src: response.data.secure_url.replace('.png', '.jpg')
+        src: response.data.secure_url.replace('.png', '.jpg'), cloudinaryUploading: false
       })
     }
     this.props.fetchVisuallySimilarProducts(this.state.src, this.state.bbCordinates);
@@ -155,28 +153,49 @@ class TagProducts extends Component {
 
 
 
-  tagProduct(product) {
+  async tagProduct(product) {
     let currentlyTaggedProducts = this.state.currentlyTaggedProducts;
     let removed;
+    let productId = product.productId;
+    let title = product.title;
 
     currentlyTaggedProducts.forEach((ele) => {
-      if (ele.productId === product.productId) {
+      if (ele.productId === productId) {
         removed = true;
-        this.removeProductFromTagging(product.productId);
+        this.removeProductFromTagging(productId);
       }
     });
 
+
+    // The request is for tagging a product(not for removal)
     if (!removed) {
-      currentlyTaggedProducts.push(product);
-      this.setState({ currentlyTaggedProducts: currentlyTaggedProducts, productSelected: product.productId });
+      let response = await axios.get(`${sharedVariables.baseUrl}/product/check-product-availability?productId=${product.productId}`).catch(e => { })
+      if (response && response.data.available === true) {
+        currentlyTaggedProducts.push(product);
+        this.setState({ currentlyTaggedProducts: currentlyTaggedProducts, productSelected: productId });
+      } else {
+        // alert('Out of stock')
+        if (window.confirm('Out of stock want to check similar?')) {
+          this.removeProductFromTagging(productId);
+          let response = await axios.get(`${sharedVariables.baseUrl}/product/fetch-updated-similar-products?query=${title}`).catch(e => { })
+          let products = this.state.similarProducts;
+          products = [...response.data.products, ...products];
+          this.setState({ similarProducts: products })
+        } else {
+          // Do nothing!
+          this.removeProductFromTagging(productId);
+          console.log('Thing was not saved to the database.');
+        }
+
+      }
     }
+    console.log('hh', currentlyTaggedProducts)
   };
 
   removeProductFromTagging(productId) {
     let currentlyTaggedProducts = this.state.currentlyTaggedProducts;
     currentlyTaggedProducts = currentlyTaggedProducts.filter(product => product.productId !== productId);
     this.setState({ currentlyTaggedProducts: currentlyTaggedProducts });
-    // console.log(document.querySelector(`#${productId}`).checked)
     if (document.querySelector(`#${productId}`)) {
       document.querySelector(`#${productId}`).checked = false;
 
@@ -275,8 +294,9 @@ class TagProducts extends Component {
   }
   renderSearchBar() {
     return (
-      <input style={styles.inputSearchStyle} placeholder="Ex: Women Blue jeans under 1000" type="text" value={this.state.searchQuery} onChange={(e) => this.searchQueryChange(e)} onKeyPress={(e) => { this.searchProducts(e) }}
-      />
+      <input style={styles.inputSearchStyle}
+        className="shadow p-3 mb-5 bg-white"
+        placeholder="Ex: Women Blue jeans under 1000" type="text" value={this.state.searchQuery} onChange={(e) => this.searchQueryChange(e)} onKeyPress={(e) => { this.searchProducts(e) }} />
     )
   }
   renderActionButtonsAndSearchbar() {
@@ -306,33 +326,17 @@ class TagProducts extends Component {
             Next Post
       </Button>
         </div>
-        <div style={{ justifyContent: 'center' }}>{(this.props.loading || this.props.productLoading) && this.renderLoadingSpinner()}</div>
+        <div style={{ justifyContent: 'center' }}>{(this.state.cloudinaryUploading || this.props.loading || this.props.productsLoading) && this.renderLoadingSpinner()}</div>
       </div>
     );
   };
 
   renderCandidateProducts() {
     if (this.props.posts[0]) {
-
       let hashMap = {};
       (this.props.posts[0]._source.tempProducts || []).forEach(product => { hashMap[product.productId] = product; });
-      // console.log(hashMap);
       let uniqueTempProducts = Object.values(hashMap);
-      return uniqueTempProducts.map((product, index) => {
-        return (
-          <div key={index} className="col-lg-3 shadow p-3 mb-5 bg-white rounded" style={{ height: '280px' }}>
-            <Card style={{ maxWidth: "100%", maxHeight: '260px', position: "relative" }}>
-              <Card.Img style={{ height: '200px' }} variant="top" src={product.image || product.imagesArray[0]} />
-              <div style={{ position: 'absolute', top: '180px', right: '0px' }} className="mb-3">
-                <label className="custom-control custom-checkbox">
-                  <input type="checkbox" style={{ ...style.LargeCheckbox, ...style.pointer }} onChange={() => { this.tagProduct(product); }} label="" id={product.productId} />
-                </label>
-              </div>
-              <strong>{product.brandName}</strong> {product.ecommerce} - Rs.{product.price}
-            </Card>
-          </div>
-        );
-      });
+      return uniqueTempProducts.map((product, index) => this.generalProductCard(product, index));
     } else {
       return [];
     }
@@ -340,25 +344,45 @@ class TagProducts extends Component {
 
   renderProducts() {
     if (this.props.products.length > 0) {
-      let products = this.props.products.map((product) => {
-        return (
-          <div className="col-lg-3 shadow p-3 mb-5 bg-white rounded" style={{ height: '280px' }} key={product.productId}>
-            <Card style={{ maxWidth: "100%", maxHeight: '260px', position: "relative" }}>
-              <Card.Img style={{ height: '200px' }} variant="top" src={product.image || product.imagesArray[0]} />
-              <div style={{ position: 'absolute', top: '180px', right: '0px' }} className="mb-3">
-                <label className="custom-control custom-checkbox">
-                  <input type="checkbox" style={{ ...style.LargeCheckbox, ...style.pointer }} onChange={() => { this.tagProduct(product); }} label="" id={product.productId} />
-                </label>
-              </div>
-              <strong>{product.brandName}</strong> {product.ecommerce} - Rs.{product.price}
-            </Card>
-          </div>
-        );
-      });
+      let products = this.props.products.map((product, index) => this.generalProductCard(product, index));
       return products;
     } else {
       return [];
     }
+  }
+  renderSimilarProducts() {
+    if (this.state.similarProducts.length > 0) {
+      let products = this.state.similarProducts.map((product, index) => this.generalProductCard(product, index));
+      return products;
+    } else {
+      return [];
+    }
+  }
+  generalProductCard(product, index) {
+    let backgroundColor = null;
+    if (!product.stockAvailability) {
+      backgroundColor = 'yellow'
+    } else {
+      backgroundColor = (product.stockAvailability && (product.updationTime > 1594492200)) ? 'green' : 'red';
+    }
+
+    return (
+      <div key={index} style={{ height: '280px', padding: 2 }} className="col-lg-3 ">
+        <Card style={{ maxWidth: "100%", maxHeight: '260px', position: "relative" }} className="shadow p-3 mb-5 bg-white rounded">
+          <Card.Img style={{ height: '200px' }} variant="top" src={product.image || product.imagesArray[0]} />
+          <span style={{ position: 'absolute', borderRadius: 10, height: 10, width: 10, background: backgroundColor, right: 5, top: 10 }}></span>
+          <div style={{ position: 'absolute', top: '200px', right: '0px' }}>
+            <label className="custom-control custom-checkbox">
+              <input type="checkbox" style={{ ...style.LargeCheckbox, ...style.pointer }} onChange={() => { this.tagProduct(product); }} label="" id={product.productId} />
+            </label>
+          </div>
+          <div style={styles.titleAndBrand}>
+            <strong>{product.brandName}</strong> {product.ecommerce} - Rs.{product.price}
+
+          </div>
+        </Card>
+      </div>
+    );
   }
   renderAlreadySelectedProducts() {
     return this.state.currentlyTaggedProducts.map((product, index) => {
@@ -403,17 +427,27 @@ class TagProducts extends Component {
         </div>
         <div className="col-lg-9 text-center">
 
-          <div className="row text-center">
-            <div className="col-lg-10">
+          <div className="row">
+            <div className="col-lg-12">
               {this.renderActionButtonsAndSearchbar()}
             </div>
+          </div>
+
+          <div className="col-lg-11">
             <div className="row">
               {this.renderAlreadySelectedProducts()}
-            </div>
 
-            {this.renderProducts()}
-            {this.renderCandidateProducts()}
+            </div>
+            <div className="row">
+
+
+              {this.renderSimilarProducts()}
+              {this.renderProducts()}
+              {this.renderCandidateProducts()}
+            </div>
           </div>
+
+
         </div>
       </div>
     );
@@ -436,11 +470,16 @@ function mapDispatchToProps(dispatch) {
 
 const styles = {
   inputSearchStyle: {
-    width: '55%',
-    borderRadius: 30,
+    width: '65%',
+    borderRadius: 5,
+    borderColor: '#eee',
+    borderWidth: 0,
     height: 45,
     justifyContent: 'left',
     padding: 5
+  },
+  titleAndBrand: {
+    fontSize: 12
   }
 }
 export default connect(mapStateToProps, mapDispatchToProps)(TagProducts);

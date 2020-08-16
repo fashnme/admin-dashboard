@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import { Navbar, Button } from "react-bootstrap";
+import { Button, Navbar } from "react-bootstrap";
 import { style } from './../../shared/Variables';
-
 import AdminNavbarLinks from "./AdminNavbarLinks.js";
+
 
 class Header extends Component {
     constructor(props) {
@@ -30,21 +30,10 @@ class Header extends Component {
     }
     render() {
         return (
-            // <Navbar fluid>
-            //   <NavbarBrand>
-            //     <a href="#pablo"></a>
-            //   </NavbarBrand>
-            //   <Navbar.Toggle onClick={this.mobileSidebarToggle} />
-            //   <Navbar.Collapse>
-            //     <AdminNavbarLinks />
-            //   </Navbar.Collapse>
-            // </Navbar>
-
             <Navbar>
-                <Navbar.Brand href="#pablo">{this.props.brandText}</Navbar.Brand>
-                <Button style={style.toggleButton}  className="d-block d-sm-none" onClick={this.mobileSidebarToggle}>
+                <Button style={style.toggleButton} className="d-block d-sm-none" onClick={this.mobileSidebarToggle}>
                     <i className="pe-7s-menu lg"></i>
-                    </Button>
+                </Button>
                 <Navbar.Collapse id="basic-navbar-nav">
                     <AdminNavbarLinks />
                 </Navbar.Collapse>

@@ -1,1 +1,1 @@
-export const isLoggedIn = () => !window.localStorage["admin"] ? false : true; 
+export const isLoggedIn = () => window.localStorage["admin"] && JSON.parse(window.localStorage["lastLoggedin"]) + 86400000 * 2 > new Date().getTime() ? true : false; 
