@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import { Button, Card, Spinner } from 'react-bootstrap';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import ReactStars from "react-rating-stars-component";
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import sharedVariables from '../shared/sharedVariables';
@@ -10,6 +11,11 @@ import { fetchPostById, fetchPostByPageNo, fetchTextuallySimilarProducts, fetchV
 import { style } from './../shared/Variables';
 
 
+const colorsArray = [["#136a8a", "#267871"], ["#7b4397", "#dc2430"], ["#e53935", "#e35d5b"], ["#005c97", "#363795"], ["#673ab7", "#512da8"]]
+
+const getRandomColor = () => '"' + 'linear-gradient(' + colorsArray[Math.floor(Math.random() * 5)] + ')' + '"'
+
+// console.log(getRandomColor())
 class TagProducts extends Component {
   constructor() {
     super();
@@ -26,12 +32,16 @@ class TagProducts extends Component {
       currentPostId: null,
       searchQuery: '',
       similarProducts: [],
-      cloudinaryUploading: false
+      cloudinaryUploading: false,
+      postRating: 0,
+      postTags: []
     };
     this.state = { ...this.initialState };
 
     this.searchProducts = this.searchProducts.bind(this);
     this.searchQueryChange = this.searchQueryChange.bind(this);
+    this.ratingChange = this.ratingChange.bind(this);
+    this.addTag = this.addTag.bind(this);
   };
 
   componentDidMount() {
@@ -78,10 +88,10 @@ class TagProducts extends Component {
       this.props.fetchTextuallySimilarProducts(this.state.searchQuery);
     }
   }
+
   searchQueryChange(event) {
     this.setState({ searchQuery: event.target.value })
   }
-
 
   async makeClientCrop(crop) {
     if (this.imageRef && crop.width && crop.height) {
@@ -93,7 +103,6 @@ class TagProducts extends Component {
       this.setState({ croppedImageUrl });
     }
   };
-
 
   getCroppedImg(image, crop) {
 
@@ -126,7 +135,7 @@ class TagProducts extends Component {
 
   onImageLoaded = image => {
     this.imageRef = image;
-    this.setState({ currentPostId: this.props.posts[0]._id, src: image.src });
+    this.setState({ currentPostId: this.props.posts[0]._id, src: image.src, postTags: this.props.posts[0]._source.postTags, postRating: this.props.posts[0]._source.rating });
     this.setState({
       currentlyTaggedProducts: this.props.posts[0]._source.taggedProducts
     })
@@ -216,10 +225,12 @@ class TagProducts extends Component {
   onVideoMetaDataLoadingCompletion() {
     let video = this.refs.video;
     let canvas = this.refs.canvasOfSS;
-
+    console.log(this.props.posts[0]._source.rating)
     this.setState({
-      canvas, video, currentlyTaggedProducts: this.props.posts[0]._source.taggedProducts, currentPostId: this.props.posts[0]._id
+      canvas, video, currentlyTaggedProducts: this.props.posts[0]._source.taggedProducts, currentPostId: this.props.posts[0]._id, postTags: this.props.posts[0]._source.postTags, postRating: this.props.posts[0]._source.rating
     })
+
+
 
   };
 
@@ -240,6 +251,18 @@ class TagProducts extends Component {
     let b64 = canvas.toDataURL();
     this.setState({ src: b64 });
   };
+
+
+  async ratingChange(rating) {
+    await axios.post(`${sharedVariables.baseUrl}/admin/update-rating-tags`, { postId: this.state.currentPostId, rating }, { headers: sharedVariables.headers })
+    alert('Updated')
+  }
+
+  async addTag(tag) {
+    await axios.post(`${sharedVariables.baseUrl}/admin/update-rating-tags`, { postId: this.state.currentPostId, tag }, { headers: sharedVariables.headers })
+    alert('Updated')
+
+  }
 
   renderVideoPost() {
     if (this.props.posts[0] && this.props.posts[0]._source.mediaType === 'video') {
@@ -297,7 +320,27 @@ class TagProducts extends Component {
       <input style={styles.inputSearchStyle}
         className="shadow p-3 mb-5 bg-white"
         placeholder="Ex: Women Blue jeans under 1000" type="text" value={this.state.searchQuery} onChange={(e) => this.searchQueryChange(e)} onKeyPress={(e) => { this.searchProducts(e) }} />
+
     )
+  }
+
+  renderChips() {
+    return <div style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', display: 'flex-inline' }}>{['music', 'fashion', 'beauty', 'funny', 'lipsync', 'dance'].map(e => {
+      return (<button style={styles.chipStyle} onClick={() => this.addTag(e)} >{e}</button>)
+    })}
+    </div>
+  }
+
+  renderRating() {
+    return <div style={{ marginTop: -30 }}>
+      <ReactStars
+        count={5}
+        value={this.state.postRating}
+        onChange={this.ratingChange}
+        size={24}
+        activeColor="#ffd700"
+      />
+    </div>
   }
   renderActionButtonsAndSearchbar() {
     return (
@@ -325,14 +368,19 @@ class TagProducts extends Component {
             onClick={() => { this.fetchNextPagePost() }}>
             Next Post
       </Button>
+          {this.renderChips()}
+          {this.renderRating()}
         </div>
+
         <div style={{ justifyContent: 'center' }}>{(this.state.cloudinaryUploading || this.props.loading || this.props.productsLoading) && this.renderLoadingSpinner()}</div>
+
       </div>
     );
   };
 
   renderCandidateProducts() {
     if (this.props.posts[0]) {
+      // console.log(this.props.posts[0])
       let hashMap = {};
       (this.props.posts[0]._source.tempProducts || []).forEach(product => { hashMap[product.productId] = product; });
       let uniqueTempProducts = Object.values(hashMap);
@@ -480,6 +528,18 @@ const styles = {
   },
   titleAndBrand: {
     fontSize: 12
+  },
+  chipStyle: {
+    borderRadius: 15,
+    fontSize: 12,
+    cursor: 'pointer',
+    border: '1px solid grey',
+    backgroundColor: getRandomColor(),
+    textTransform: 'uppercase',
+    padding: 5,
+    margin: 2,
+    display: 'inline-flex'
   }
 }
+
 export default connect(mapStateToProps, mapDispatchToProps)(TagProducts);
