@@ -135,7 +135,7 @@ class TagProducts extends Component {
 
   onImageLoaded = image => {
     this.imageRef = image;
-    this.setState({ currentPostId: this.props.posts[0]._id, src: image.src, postTags: this.props.posts[0]._source.postTags, postRating: this.props.posts[0]._source.rating });
+    this.setState({ currentPostId: this.props.posts[0]._id, src: image.src, postTags: this.props.posts[0]._source.tags, postRating: this.props.posts[0]._source.rating });
     this.setState({
       currentlyTaggedProducts: this.props.posts[0]._source.taggedProducts
     })
@@ -178,25 +178,28 @@ class TagProducts extends Component {
 
     // The request is for tagging a product(not for removal)
     if (!removed) {
-      let response = await axios.get(`${sharedVariables.baseUrl}/product/check-product-availability?productId=${product.productId}`).catch(e => { })
-      if (response && response.data.available === true) {
-        currentlyTaggedProducts.push(product);
-        this.setState({ currentlyTaggedProducts: currentlyTaggedProducts, productSelected: productId });
-      } else {
-        // alert('Out of stock')
-        if (window.confirm('Out of stock want to check similar?')) {
-          this.removeProductFromTagging(productId);
-          let response = await axios.get(`${sharedVariables.baseUrl}/product/fetch-updated-similar-products?query=${title}`).catch(e => { })
-          let products = this.state.similarProducts;
-          products = [...response.data.products, ...products];
-          this.setState({ similarProducts: products })
-        } else {
-          // Do nothing!
-          this.removeProductFromTagging(productId);
-          console.log('Thing was not saved to the database.');
-        }
+      currentlyTaggedProducts.push(product);
+      this.setState({ currentlyTaggedProducts: currentlyTaggedProducts, productSelected: productId });
 
-      }
+      // let response = await axios.get(`${sharedVariables.baseUrl}/product/check-product-availability?productId=${product.productId}`).catch(e => { })
+      // if (response && response.data.available === true) {
+      //   currentlyTaggedProducts.push(product);
+      //   this.setState({ currentlyTaggedProducts: currentlyTaggedProducts, productSelected: productId });
+      // } else {
+      //   // alert('Out of stock')
+      //   if (window.confirm('Out of stock want to check similar?')) {
+      //     this.removeProductFromTagging(productId);
+      //     let response = await axios.get(`${sharedVariables.baseUrl}/product/fetch-updated-similar-products?query=${title}`).catch(e => { })
+      //     let products = this.state.similarProducts;
+      //     products = [...response.data.products, ...products];
+      //     this.setState({ similarProducts: products })
+      //   } else {
+      //     // Do nothing!
+      //     this.removeProductFromTagging(productId);
+      //     console.log('Thing was not saved to the database.');
+      //   }
+
+      // }
     }
     console.log('hh', currentlyTaggedProducts)
   };
@@ -227,7 +230,7 @@ class TagProducts extends Component {
     let canvas = this.refs.canvasOfSS;
     console.log(this.props.posts[0]._source.rating)
     this.setState({
-      canvas, video, currentlyTaggedProducts: this.props.posts[0]._source.taggedProducts, currentPostId: this.props.posts[0]._id, postTags: this.props.posts[0]._source.postTags, postRating: this.props.posts[0]._source.rating
+      canvas, video, currentlyTaggedProducts: this.props.posts[0]._source.taggedProducts, currentPostId: this.props.posts[0]._id, postTags: this.props.posts[0]._source.tags, postRating: this.props.posts[0]._source.rating
     })
 
 
@@ -325,13 +328,15 @@ class TagProducts extends Component {
   }
 
   renderChips() {
+    console.log(this.state.postTags)
     return <div style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', display: 'flex-inline' }}>{['music', 'fashion', 'beauty', 'funny', 'lipsync', 'dance'].map(e => {
-      return (<button style={styles.chipStyle} onClick={() => this.addTag(e)} >{e}</button>)
+      return (<button style={{ ...styles.chipStyle, backgroundColor: (this.state.postTags || []).indexOf(e) != -1 ? 'yellow' : 'white' }} onClick={() => this.addTag(e)} >{e}</button>)
     })}
     </div>
   }
 
   renderRating() {
+    console.log(this.state.postRating)
     return <div style={{ marginTop: -30 }}>
       <ReactStars
         count={5}
@@ -368,8 +373,11 @@ class TagProducts extends Component {
             onClick={() => { this.fetchNextPagePost() }}>
             Next Post
       </Button>
-          {this.renderChips()}
-          {this.renderRating()}
+          {this.state.postTags && this.renderChips()}
+          {!this.state.postTags && this.renderChips()}
+          {this.state.postRating && this.renderRating()}
+          {!this.state.postRating && this.renderRating()}
+
         </div>
 
         <div style={{ justifyContent: 'center' }}>{(this.state.cloudinaryUploading || this.props.loading || this.props.productsLoading) && this.renderLoadingSpinner()}</div>
