@@ -16,7 +16,6 @@ import { Login } from './views/Login';
 
 
 const store = createStore(reducers, {}, applyMiddleware(ReduxThunk));
-
 ReactDOM.render(
   <Provider store={store}>
     <BrowserRouter>
@@ -37,6 +36,4 @@ ReactDOM.render(
   </Provider>,
   document.getElementById('root')
 )
-
-
 
