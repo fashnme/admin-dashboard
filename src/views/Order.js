@@ -11,8 +11,8 @@ class Order extends Component {
         this.props.orderPageDataFetch(this.props.match.params.id);
     };
 
-    updateProductStatus(a, b, c) {
-        this.props.updateOrderProductStatus(a, b, c);
+    updateProductStatus(orderId, product, statusToSet) {
+        this.props.updateOrderProductStatus(orderId, product, statusToSet);
     }
 
     renderProducts() {
@@ -33,7 +33,7 @@ class Order extends Component {
                                 <Form.Control
                                     as="select"
                                     defaultValue={product.status}
-                                    onChange={(event) => { this.updateProductStatus(this.props.orderDetails.orderId, product.productId, event.target.value); }}
+                                    onChange={(event) => { this.updateProductStatus(this.props.orderDetails.orderId, product, event.target.value) }}
                                 >
                                     <option >Select</option>
                                     <option value="placed">Placed</option>

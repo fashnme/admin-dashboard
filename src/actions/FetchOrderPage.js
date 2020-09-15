@@ -32,23 +32,33 @@ const getOrder = (orderId, dispatch) => {
 }
 
 
-export const updateOrderProductStatus = (orderId, productId, status) => {
-    console.log(orderId, productId, status)
-    // axios.post(`${baseUrl}/admin/update-order-status/`, { orderId, productId, status }, {headers})
-    //     .then((updated) => {
-    //         console.log('order updated', updated);
+export const updateOrderProductStatus = (orderId, product, statusToSet) => {
+    // console.log(orderId, productId, status)
+    return (dispatch) => {
 
-    //         return (dispatch) => {
+        //Dispatch Loading Action
+        dispatch({ type: FETCH_ORDER_LOADING, payload: {} });
 
-    //             //Dispatch Loading Action
-    //             dispatch({ type: FETCH_ORDER_LOADING, payload: {} });
+        //Call Function to get order from server
+        // getOrder(orderId, dispatch);
 
-    //             //Call Function to get order from server
-    //             getOrder(orderId, dispatch);
-    //         }
-    //     })
-    //     .catch(error => {
-    //         // dispatch(ordersFailed(error.message))
-    //     });
+        axios.post(`${baseUrl}/admin/update-order-status/`, { orderId, product, statusToSet }, { headers })
+            .then((updated) => {
+                console.log('order updated', updated);
+
+                return (dispatch) => {
+
+                    //Dispatch Loading Action
+                    dispatch({ type: FETCH_ORDER_LOADING, payload: {} });
+
+                    //Call Function to get order from server
+                    getOrder(orderId, dispatch);
+                }
+            })
+            .catch(error => {
+                // dispatch(ordersFailed(error.message))
+            });
+
+    }
 
 }
